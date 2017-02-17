@@ -1,4 +1,4 @@
-﻿// Author(s): Paul Calande
+﻿// Author(s): Paul Calande, Moshe Katzin-Nystrom
 // A script that handles player movement.
 
 using UnityEngine;
@@ -9,9 +9,14 @@ public class PlayerMovement : MonoBehaviour
     // How fast the player moves. Higher = faster.
     private const float movementSpeed = 5.0f;
 
+    // A Rigidbody is a component that helps to handle game physics. This is what we apply movement
+    // to, as opposed to the player model itself, so that there is rudimentary collision support.
+    private Rigidbody body;
+    
 	// Use this for initialization
 	void Start () {
-	
+        // Once everything loads, we can get the Rigidbody.
+        body = GetComponent<Rigidbody>();
 	}
 	
 	// Update is called once per frame
@@ -47,6 +52,10 @@ public class PlayerMovement : MonoBehaviour
             newPosition.z -= movementSpeed * Time.deltaTime;
         }
         // Update the player's position with the new position.
-        transform.position = newPosition;
+        body.MovePosition(newPosition);
+
+        // HACK: We don't want the player rotating (at least for now), which happens sometimes because of physics calculations.
+        // In Unity, rotations are represented by Quaternions, which shouldn't be modified directly, but can be constructed from a vector.
+        transform.rotation = Quaternion.Euler(new Vector3(0.0f, 0.0f, 0.0f));
 	}
 }
