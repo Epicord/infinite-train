@@ -9,7 +9,7 @@ public class PlayerMovement : MonoBehaviour
     // How fast the player moves. Higher = faster.
     private const float movementSpeed = 7.2f;
 
-    private Vector3 move = Vector3.zero; // Stores the amount of movement on each frame.
+    public Vector3 move = Vector3.zero; // Stores the amount of movement on each frame.
     private float slow = 1f;  // This number divides the overall movement by a value. This is used for diagonal movement.
     private bool canJump = true; // Boolean to check if the player can jump or nah
     private bool onGround = true; // Boolean to check if the player is on the ground
@@ -24,7 +24,8 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody body;
     
 	// Use this for initialization
-	void Start () {
+	void Start ()
+    {
         // Once everything loads, we can get the Rigidbody.
         body = GetComponent<Rigidbody>();
         // A delicious testing variable for seeing if we can jump later.
