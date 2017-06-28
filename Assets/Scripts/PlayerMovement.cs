@@ -9,9 +9,7 @@ public class PlayerMovement : MonoBehaviour
     // How fast the player moves. Higher = faster.
     private const float movementSpeed = 7.2f;
 
-    private float xmove = 0f; // Variable to store the movement along the X axis.
-    private float ymove = 0f; // Variable to store the movement along the Y axis.
-    private float zmove = 0f; // Variable to store the movement along the Z axis.
+    private Vector3 move = Vector3.zero; // Stores the amount of movement on each frame.
     private float slow = 1f;  // This number divides the overall movement by a value. This is used for diagonal movement.
     private bool canJump = true; // Boolean to check if the player can jump or nah
     private bool onGround = true; // Boolean to check if the player is on the ground
@@ -31,7 +29,9 @@ public class PlayerMovement : MonoBehaviour
         body = GetComponent<Rigidbody>();
         // A delicious testing variable for seeing if we can jump later.
         testpos = body.position.y;
-}
+        // Lock the cursor so it can't escape our grasp. Camera controls.
+        Cursor.lockState = CursorLockMode.Locked;
+    }
 	
 	// Update is called once per frame
 	void Update ()
@@ -56,8 +56,7 @@ public class PlayerMovement : MonoBehaviour
         // Testing position update, to see if we can jump later.
         testpos = body.position.y;
         slow = 1f;  // Reset variables
-        xmove = 0f;
-        zmove = 0f;
+        move = Vector3.zero;
         // Let's check the player's keyboard inputs.
         // If the player presses left...
         if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
@@ -65,45 +64,44 @@ public class PlayerMovement : MonoBehaviour
             // Move left.
             // Time.deltaTime refers to the amount of time that has passed since the last frame.
             // Using this in object movement allows our game to run independently from framerate.
-            xmove -= movementSpeed * Time.deltaTime;
+            move.x -= movementSpeed * Time.deltaTime;
         }
         // If the player presses right...
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
         {
             // Move right.
-            xmove += movementSpeed * Time.deltaTime;
+            move.x += movementSpeed * Time.deltaTime;
         }
         // If the player presses up...
         if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
         {
             // Move up.
-            zmove += movementSpeed * Time.deltaTime;
+            move.z += movementSpeed * Time.deltaTime;
         }
         // If the player presses down...
         if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
         {
             // Move down.
-            zmove -= movementSpeed * Time.deltaTime;
+            move.z -= movementSpeed * Time.deltaTime;
         }
         // If the player presses space...
         if (Input.GetKey(KeyCode.Space) && canJump)
         {
-            ymove = jump;
+            move.y = jump;
             canJump = false;
             onGround = false;
         }
-        if (xmove != 0f && zmove != 0f) // Are we moving diagonally?
+        if (move.x != 0f && move.z != 0f) // Are we moving diagonally?
         {
             // If so, let's slow down the movement.
             slow = 1.414f; // Approximately sqrt(2), because math
         }
-        applyForce.y = ymove;           // update applyForce
-        newPosition.x += xmove / slow;  // set the x movement
-        newPosition.z += zmove / slow;  // and also set the z movement
+        applyForce.y = move.y;           // update applyForce
+        newPosition += transform.rotation * move;  // set the movement, accounting for whichever direction the player is facing
         body.MovePosition(newPosition); // and MOVE!
         body.AddForce(applyForce); // apply the force to the body
         
-        if (body.position.y < 0.5) // player must be on baseplate
+        if (body.position.y < 0.5 && move.y != jump) // player must be on baseplate and not trying to jump
         {
             Vector3 groundpos = body.position; // get the player position
             groundpos.y = 0.5f; // make the y value on the ground
@@ -113,22 +111,21 @@ public class PlayerMovement : MonoBehaviour
             // fix it
         }
 
-        // HACK: We don't want the player rotating (at least for now), which happens sometimes because of physics calculations.
-        // In Unity, rotations are represented by Quaternions, which shouldn't be modified directly, but can be constructed from a vector.
-        transform.rotation = Quaternion.Euler(new Vector3(0.0f, 0.0f, 0.0f));
+        // Rotate the player with some sick mouselook controls, but counteract any accidental rotation from physics calculations.
+        transform.Rotate(new Vector3(-transform.rotation.eulerAngles.x, Input.GetAxisRaw("Mouse X"), -transform.rotation.eulerAngles.z));
 
         // Gravity Falls Fanboys --v
         if (onGround == false)
         {
-            ymove -= gravity;
-            if (ymove < -100)
+            move.y -= gravity;
+            if (move.y < -100)
             {
-                ymove = -100; // terminal velocity
+                move.y = -100; // terminal velocity
             }
         }
         else
         {
-            ymove = 0; //stop falling jfc
+            move.y = 0; //stop falling jfc
         }
 
         // HACK: i am a professional hacker
